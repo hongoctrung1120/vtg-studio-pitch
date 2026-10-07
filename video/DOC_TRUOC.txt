@@ -1,0 +1,6 @@
+Đặt 2 phim mẫu vào thư mục này, đúng tên:
+  phim-cuoi.mp4       -> phát trong khung trái slide 4
+  phim-mung-tho.mp4   -> phát trong khung phải slide 4
+Nhấp vào khung để phát/tạm dừng, nhấp đúp để phóng toàn màn hình.
+Chưa có file thì slide 4 vẫn hiện khung trống như ảnh gốc.
+Nên nén mp4 (H.264) dưới ~50 MB mỗi phim để tải nhanh.
