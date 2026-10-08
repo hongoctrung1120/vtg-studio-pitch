@@ -28,11 +28,9 @@ body { -webkit-user-select: none; user-select: none; touch-action: pan-y; }
 .sl { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; visibility: hidden; transition: opacity .8s ease, visibility 0s linear .8s; }
 .sl.on { opacity: 1; visibility: visible; transition: opacity .8s ease; z-index: 2; }
 .sl .bd { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(34px) brightness(.38) saturate(1.2); transform: scale(1.08); }
-.frame { position: relative; width: min(100vw, calc(100vh * var(--ratio))); width: min(100vw, calc(100dvh * var(--ratio))); aspect-ratio: 1672 / 941; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,.55); transform: scale(.985); transition: transform .9s cubic-bezier(.16,1,.3,1); }
-.sl.on .frame { transform: scale(1); }
-.frame > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transform-origin: var(--kb, 50% 50%); }
-.play .sl.on .frame > img { animation: kb 16s ease-out both; }
-@keyframes kb { from { transform: scale(1.035); } to { transform: scale(1); } }
+/* Không co giãn ảnh (zoom chậm làm chữ trong ảnh bị nhoè): ảnh luôn vẽ đúng kích thước khung */
+.frame { position: relative; width: min(100vw, calc(100vh * var(--ratio))); width: min(100vw, calc(100dvh * var(--ratio))); aspect-ratio: 1672 / 941; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,.55); }
+.frame > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 /* Vệt sáng vàng quét qua khi vào slide */
 .frame::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(255,214,140,.22) 48%, rgba(255,236,190,.32) 50%, rgba(255,214,140,.22) 52%, transparent 65%); transform: translateX(-120%); }
 .play .sl.on .frame::after { animation: sweep 1.6s .25s ease-out both; }
@@ -76,8 +74,8 @@ canvas.dust { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
 .grid button:focus-visible { outline: 2px solid var(--gold); }
 
 @media (prefers-reduced-motion: reduce) {
-  .play .sl.on .frame > img, .play .sl.on .frame::after { animation: none; }
-  .sl, .frame { transition: none; }
+  .play .sl.on .frame::after { animation: none; }
+  .sl { transition: none; }
 }
 </style>
 </head>
@@ -104,9 +102,10 @@ canvas.dust { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
 <script>
 /* ---------- Danh sách slide ---------- */
 const N = 14;
-const SLIDES = Array.from({ length: N }, (_, i) => 'img/slide' + String(i + 1).padStart(2, '0') + '.jpg');
-/* Điểm neo hiệu ứng zoom chậm (Ken Burns) cho từng slide: hướng về phần hình nổi bật */
-const KB = { 1: '78% 45%', 2: '50% 40%', 3: '70% 45%', 5: '50% 35%', 6: '80% 65%', 8: '80% 70%', 14: '50% 20%' };
+/* Ảnh gốc, giữ nguyên định dạng và độ phân giải (không nén lại) */
+const SLIDES = ["img/slide01.jpg", "img/slide02.jpg", "img/slide03.jpg", "img/slide04.png", "img/slide05.png", "img/slide06.png", "img/slide07.png", "img/slide08.png", "img/slide09.png", "img/slide10.png", "img/slide11.png", "img/slide12.png", "img/slide13.png", "img/slide14.png"];
+/* Ảnh nhỏ cho nền mờ và lưới xem nhanh; ảnh nét cao chỉ tải khi cần */
+const THUMBS = SLIDES.map(s => s.replace('img/', 'img/thumb/').replace(/\.png$/, '.jpg'));
 /* Phim thật cho 2 khung trống ở slide 4 — đặt file vào thư mục video/ với đúng tên dưới đây */
 const VIDEOS = {
   4: [
@@ -123,10 +122,9 @@ const slides = SLIDES.map((src, i) => {
   const n = i + 1;
   const s = document.createElement('section');
   s.className = 'sl'; s.setAttribute('aria-label', 'Slide ' + n);
-  const bd = document.createElement('div'); bd.className = 'bd'; bd.style.backgroundImage = 'url(' + src + ')';
+  const bd = document.createElement('div'); bd.className = 'bd'; bd.style.backgroundImage = 'url(' + THUMBS[i] + ')';
   const fr = document.createElement('div'); fr.className = 'frame';
-  const img = document.createElement('img'); img.src = src; img.alt = 'Slide ' + n; img.decoding = 'async'; img.draggable = false;
-  if (KB[n]) fr.style.setProperty('--kb', KB[n]);
+  const img = document.createElement('img'); img.dataset.src = src; img.alt = 'Slide ' + n; img.decoding = 'async'; img.draggable = false;
   fr.appendChild(img);
   (VIDEOS[n] || []).forEach(v => {
     const box = document.createElement('div'); box.className = 'vid';
@@ -146,7 +144,7 @@ const slides = SLIDES.map((src, i) => {
 
   const t = document.createElement('button'); t.type = 'button'; t.setAttribute('aria-label', 'Tới slide ' + n);
   t.innerHTML = '<img alt="" loading="lazy"><span></span>';
-  t.querySelector('img').src = src; t.querySelector('span').textContent = n;
+  t.querySelector('img').src = THUMBS[i]; t.querySelector('span').textContent = n;
   t.addEventListener('click', () => { closeGrid(); go(i); });
   tiles.appendChild(t);
   return s;
@@ -158,12 +156,24 @@ function replay() {
   document.body.classList.remove('play'); void document.body.offsetWidth; document.body.classList.add('play');
   burst();
 }
+function want(i) {
+  const im = slides[i] && slides[i].querySelector('.frame > img');
+  if (im && !im.src) im.src = im.dataset.src;
+}
+let warmed = false;
+function warmAll() {
+  if (warmed) return; warmed = true;
+  let k = 0;
+  (function step() { if (k >= N) return; want(k++); setTimeout(step, 400); })();
+}
 function stopVideos(except) { deck.querySelectorAll('video').forEach(v => { if (v !== except) v.pause(); }); }
 function go(n) {
   n = Math.max(0, Math.min(N - 1, n));
   if (n === cur) return;
   if (cur >= 0) slides[cur].classList.remove('on');
-  cur = n; slides[n].classList.add('on');
+  cur = n; want(n); want(n + 1); want(n - 1);
+  slides[n].classList.add('on');
+  setTimeout(warmAll, 2500);
   stopVideos();
   pos.textContent = (n + 1) + ' / ' + N;
   bar.style.width = ((n + 1) / N * 100) + '%';
