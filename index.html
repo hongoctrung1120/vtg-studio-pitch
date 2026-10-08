@@ -106,6 +106,9 @@ const N = 14;
 const SLIDES = ["img/slide01.jpg", "img/slide02.jpg", "img/slide03.jpg", "img/slide04.png", "img/slide05.png", "img/slide06.png", "img/slide07.png", "img/slide08.png", "img/slide09.png", "img/slide10.png", "img/slide11.png", "img/slide12.png", "img/slide13.png", "img/slide14.png"];
 /* Ảnh nhỏ cho nền mờ và lưới xem nhanh; ảnh nét cao chỉ tải khi cần */
 const THUMBS = SLIDES.map(s => s.replace('img/', 'img/thumb/').replace(/\.png$/, '.jpg'));
+/* Mã phiên bản: đổi mỗi lần thay ảnh để trình duyệt không dùng bản cũ */
+const V = '?v=20261008b';
+for (let i = 0; i < SLIDES.length; i++) { SLIDES[i] += V; THUMBS[i] += V; }
 /* Phim thật cho 2 khung trống ở slide 4 — đặt file vào thư mục video/ với đúng tên dưới đây */
 const VIDEOS = {
   4: [
