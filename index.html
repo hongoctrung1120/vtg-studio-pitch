@@ -107,12 +107,12 @@ const SLIDES = ["img/slide01.jpg", "img/slide02.jpg", "img/slide03.jpg", "img/sl
 /* Ảnh nhỏ cho nền mờ và lưới xem nhanh; ảnh nét cao chỉ tải khi cần */
 const THUMBS = SLIDES.map(s => s.replace('img/', 'img/thumb/').replace(/\.png$/, '.jpg'));
 /* Mã phiên bản: đổi mỗi lần thay ảnh để trình duyệt không dùng bản cũ */
-const V = '?v=20261009a';
+const V = '?v=20261009b';
 for (let i = 0; i < SLIDES.length; i++) { SLIDES[i] += V; THUMBS[i] += V; }
 /* Phim thật cho khung dọc 9:16 ở slide 4 — đặt file vào thư mục video/ với đúng tên dưới đây */
 const VIDEOS = {
   4: [
-    { src: 'video/phim-mung-tho.mp4', label: 'Phim mừng thọ', box: [75.359, 31.562, 18.301, 58.661] }
+    { src: 'video/phim-mung-tho.mp4', label: 'Phim mừng thọ', box: [36.005, 3.507, 27.99, 88.417] }
   ]
 };
 
